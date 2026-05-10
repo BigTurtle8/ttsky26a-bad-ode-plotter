@@ -84,36 +84,23 @@ module tt_um_bad_ode_plotter_vga (
     end
   end
 
-  reg signed [7:0] curr_x;
-  reg signed [7:0] curr_y;
-  always @(posedge clk) begin
-    if (~rst_n) begin
-      curr_x <= 7'sd4;
-      curr_y <= 7'sd0;
-    end else if (counter == 0) begin
-      // VGA playground doesn't seem to support arithmetic right shift :(
-      // curr_x <= curr_x - (curr_y >>> 2);
-      // curr_y <= curr_y + (curr_x >>> 2);
-      curr_x <= curr_x
-        + 0 * {curr_x[7] ? 2'b11 : 2'b00, curr_x[7:2]} 
-        + (-1) * {curr_y[7] ? 2'b11 : 2'b00, curr_y[7:2]};
-      curr_y <= curr_y
-        + {curr_x[7] ? 2'b11 : 2'b00, curr_x[7:2]}
-        + 0 * {curr_y[7] ? 2'b11 : 2'b00, curr_y[7:2]};
-    end else begin
-      curr_x <= curr_x;
-      curr_y <= curr_y;
-    end
-  end
+  wire is_next_point;
+  solver sol(
+    .clk(clk),
+    .rst(~rst_n),
+    .xin(next_grid_centered_x),
+    .yin(next_grid_centered_y),
+    .is_point(is_next_point),
+    .step(counter == 0)
+  );
 
-  wire on_curr = (next_grid_centered_x == curr_x) & (next_grid_centered_y == curr_y);
   wire x_axis = next_grid_centered_y == 0;
   wire y_axis = next_grid_centered_x == 0;
-  assign next_rgb[5:4] = video_active ? (on_curr ? 2'b11 :
+  assign next_rgb[5:4] = video_active ? (is_next_point ? 2'b11 :
               (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
-  assign next_rgb[3:2] = video_active ? (on_curr ? 2'b11 :
+  assign next_rgb[3:2] = video_active ? (is_next_point ? 2'b11 :
               (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
-  assign next_rgb[1:0] = video_active ? (on_curr ? 2'b11 :
+  assign next_rgb[1:0] = video_active ? (is_next_point ? 2'b11 :
               (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
 
   assign {R, G, B} = video_active ? curr_rgb : 6'b000000;

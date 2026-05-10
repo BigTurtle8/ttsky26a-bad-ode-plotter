@@ -21,6 +21,7 @@ project:
     - "gridder.v"
     - "centerer.v"
     - "predictor.v"
+    - "solver.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
