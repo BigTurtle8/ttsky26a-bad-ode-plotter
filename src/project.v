@@ -62,6 +62,19 @@ module tt_um_bad_ode_plotter_vga (
     .yc(grid_centered_y)
   );
 
+  wire signed [7:0] next_grid_centered_x, next_grid_centered_y;
+  wire [5:0] curr_rgb, next_rgb;
+  predictor predict(
+    .clk(clk),
+    .rst(~rst_n),
+    .xc(grid_centered_x),
+    .yc(grid_centered_y),
+    .curr_rgb(curr_rgb),
+    .xcn(next_grid_centered_x),
+    .ycn(next_grid_centered_y),
+    .next_rgb(next_rgb)
+  );
+
   reg [21:0] counter;
   always @(posedge clk) begin
     if (~rst_n) begin
@@ -92,42 +105,18 @@ module tt_um_bad_ode_plotter_vga (
       curr_y <= curr_y;
     end
   end
-  
-  wire on_curr = (grid_centered_x == curr_x) & (grid_centered_y == curr_y);
-  wire x_axis = grid_centered_y == 0;
-  wire y_axis = grid_centered_x == 0;
-  assign R = video_active ? (on_curr ? 2'b11 :
-              (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
-  assign G = video_active ? (on_curr ? 2'b11 :
-              (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
-  assign B = video_active ? (on_curr ? 2'b11 :
-              (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
-  
-  /*
-  assign R = video_active ? {grid_centered_x[0], grid_centered_y[0]} : 2'b00;
-  assign G = video_active ? {grid_centered_x[0], grid_centered_y[0]} : 2'b00;
-  assign B = video_active ? {grid_centered_x[0], grid_centered_y[0]} : 2'b00;
-  */
-  /*
-  assign R = video_active ? {grid_x[0], grid_y[0]} : 2'b00;
-  assign G = video_active ? {grid_x[0], grid_y[0]} : 2'b00;
-  assign B = video_active ? {grid_x[0], grid_y[0]} : 2'b00;
-  */
-  /*
-  wire [9:0] moving_x = pix_x + counter;
 
-  assign R = video_active ? {moving_x[5], pix_y[2]} : 2'b00;
-  assign G = video_active ? {moving_x[6], pix_y[2]} : 2'b00;
-  assign B = video_active ? {moving_x[7], pix_y[5]} : 2'b00;
-  
-  always @(posedge vsync, negedge rst_n) begin
-    if (~rst_n) begin
-      counter <= 0;
-    end else begin
-      counter <= counter + 1;
-    end
-  end
-  */
+  wire on_curr = (next_grid_centered_x == curr_x) & (next_grid_centered_y == curr_y);
+  wire x_axis = next_grid_centered_y == 0;
+  wire y_axis = next_grid_centered_x == 0;
+  assign next_rgb[5:4] = video_active ? (on_curr ? 2'b11 :
+              (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
+  assign next_rgb[3:2] = video_active ? (on_curr ? 2'b11 :
+              (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
+  assign next_rgb[1:0] = video_active ? (on_curr ? 2'b11 :
+              (x_axis | y_axis) ? 2'b01 : 2'b00) : 2'b00;
+
+  assign {R, G, B} = video_active ? curr_rgb : 6'b000000;
 
   // Suppress unused signals warning
   wire _unused_ok_ = &{grid_x, grid_y};

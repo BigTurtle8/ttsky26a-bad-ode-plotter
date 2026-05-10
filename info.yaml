@@ -20,6 +20,7 @@ project:
     - "hvsync_generator.v"
     - "gridder.v"
     - "centerer.v"
+    - "predictor.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
